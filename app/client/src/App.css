@@ -14,18 +14,19 @@
 }
 
 .App-header {
-  background-color: #282c34;
+  /* use CSS variables for theme-aware colors */
+  background-color: var(--bg);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  color: white;
+  color: var(--text);
 }
 
 .App-link {
-  color: #61dafb;
+  color: var(--accent);
 }
 
 @keyframes App-logo-spin {
@@ -36,3 +37,59 @@
     transform: rotate(360deg);
   }
 }
+
+/* Theme variables */
+:root {
+  --bg: #ffffff;
+  --panel: #f7f7f8;
+  --text: #111827;
+  --muted: #6b7280;
+  --accent: #1976d2;
+  --card: #ffffff;
+}
+
+/* Dark theme */
+.theme-dark {
+  --bg: #0f1724; /* dark navy */
+  --panel: #0b1220;
+  --text: #e6eef8;
+  --muted: #9aa6b2;
+  --accent: #3ea6ff;
+  --card: #0b1220;
+}
+
+/* small helpers */
+body { background: var(--bg); color: var(--text); }
+.card { background: var(--card); }
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 150ms ease-out;
+}
+
+.modal-card {
+  background: #fff;
+  padding: 18px;
+  border-radius: 8px;
+  width: 340px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  transform: translateY(-6px);
+  animation: popIn 180ms cubic-bezier(.2,.9,.2,1);
+}
+
+.modal-title { margin-top: 0; margin-bottom: 6px; }
+.modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
+
+.btn { padding: 6px 10px; border-radius: 6px; border: none; cursor: pointer; }
+.btn-primary { background:#1976d2; color:white; }
+.btn-secondary { background:#efefef; }
+
+@keyframes popIn { from { opacity:0; transform: translateY(-12px) scale(.98); } to { opacity:1; transform: translateY(0) scale(1); } }
+@keyframes fadeIn { from { opacity:0 } to { opacity:1 } }

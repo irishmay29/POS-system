@@ -32,7 +32,12 @@ export function AuthProvider({ children }) {
     persist(nextUser, nextToken, nextRefresh);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      if (refreshToken) await api.post('auth/logout', { refreshToken });
+    } catch (e) {
+      // ignore errors
+    }
     setUser(null);
     setToken(null);
     setRefreshToken(null);

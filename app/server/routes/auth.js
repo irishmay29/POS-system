@@ -19,8 +19,15 @@ router.post('/register', async (req, res) => {
 
     const user = new User({ name, email, password, role });
     await user.save();
-    return res.status(201).json({ message: 'User created', user: { id: user._id, email: user.email, role: user.role } });
+    // create and return tokens (auto-login after register)
+    const payload = { id: user._id, role: user.role };
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });
+    const refreshTokenValue = crypto.randomBytes(40).toString('hex');
+    const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRES_DAYS * 24 * 60 * 60 * 1000);
+    await RefreshToken.create({ token: refreshTokenValue, user: user._id, expiresAt });
+    return res.status(201).json({ token, refreshToken: refreshTokenValue, user: { id: user._id, email: user.email, role: user.role } });
   } catch (err) {
+    console.error('Register error:', err);
     return res.status(500).json({ message: err.message });
   }
 });
@@ -45,6 +52,7 @@ router.post('/login', async (req, res) => {
 
     return res.json({ token, refreshToken: refreshTokenValue, user: { id: user._id, email: user.email, role: user.role } });
   } catch (err) {
+    console.error('Login error:', err);
     return res.status(500).json({ message: err.message });
   }
 });
@@ -75,6 +83,7 @@ router.post('/refresh', async (req, res) => {
 
     res.json({ token, refreshToken: newRefresh });
   } catch (err) {
+    console.error('Refresh error:', err);
     res.status(500).json({ message: err.message });
   }
 });
@@ -87,6 +96,7 @@ router.post('/logout', async (req, res) => {
     await RefreshToken.deleteOne({ token: refreshToken });
     res.json({ message: 'Logged out' });
   } catch (err) {
+    console.error('Logout error:', err);
     res.status(500).json({ message: err.message });
   }
 });
@@ -98,6 +108,7 @@ router.get('/me', verifyToken, async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
     return res.json(user);
   } catch (err) {
+    console.error('Me error:', err);
     return res.status(500).json({ message: err.message });
   }
 });

@@ -5,6 +5,13 @@ const instance = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// simple request logger for debugging failing requests
+instance.interceptors.request.use((config) => {
+  // eslint-disable-next-line no-console
+  console.debug('[api] Request:', config.method?.toUpperCase(), config.baseURL + config.url);
+  return config;
+});
+
 let accessToken = null;
 let refreshToken = null;
 let isRefreshing = false;
@@ -21,6 +28,7 @@ function clearTokens() {
 }
 
 // attach token
+// token attachment
 instance.interceptors.request.use((config) => {
   if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
   return config;
