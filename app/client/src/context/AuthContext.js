@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 
 export const AuthContext = createContext(null);
@@ -7,6 +7,39 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [refreshToken, setRefreshToken] = useState(null);
+  
+  // Auto-logout configuration
+  const INACTIVITY_TIMEOUT = 480 * 60 * 1000; // 30 minutes in milliseconds
+  const timeoutRef = useRef(null);
+
+  const resetTimeout = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    if (user) {
+      timeoutRef.current = setTimeout(() => {
+        logout();
+      }, INACTIVITY_TIMEOUT);
+    }
+  };
+
+  const setupActivityListeners = () => {
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    
+    const handleActivity = () => {
+      resetTimeout();
+    };
+
+    events.forEach(event => {
+      document.addEventListener(event, handleActivity, true);
+    });
+
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, handleActivity, true);
+      });
+    };
+  };
 
   useEffect(() => {
     const stored = localStorage.getItem('auth');
@@ -18,6 +51,18 @@ export function AuthProvider({ children }) {
       api.setTokens(parsed.token, parsed.refreshToken);
     }
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      resetTimeout();
+      const cleanup = setupActivityListeners();
+      return cleanup;
+    } else {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    }
+  }, [user]);
 
   const persist = (nextUser, nextToken, nextRefresh) => {
     const payload = { user: nextUser, token: nextToken, refreshToken: nextRefresh };
@@ -43,6 +88,9 @@ export function AuthProvider({ children }) {
     setRefreshToken(null);
     api.clearTokens();
     localStorage.removeItem('auth');
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
   };
 
   return (
